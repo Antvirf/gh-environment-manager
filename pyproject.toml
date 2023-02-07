@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "gh-env-manager"
+version = "0.1.0"
+description = ""
+authors = ["Antti Viitala <antti.viitala@icloud.com>"]
+readme = "README.md"
+packages = [{include = "gh_env_manager"}]
+
+[tool.poetry.scripts]
+gh-env-manager = "gh_env_manager.main:app"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+typer = {extras = ["all"], version = "^0.7.0"}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
