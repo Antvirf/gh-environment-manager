@@ -1,4 +1,7 @@
-# GitHub Environment manager - `gh_env_manager`
+# GitHub Environment Manager - `gh_env_manager`
+
+![Pytest coverage](./badges/coverage.svg)
+![Python](https://img.shields.io/badge/python-3.9%20-blue)
 
 ## Installation
 
