@@ -5,7 +5,7 @@ on:
     branches: ["*"]
 
 jobs:
-  test-create-badges-and-publish:
+  test-and-create-coverage-badge:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -28,8 +28,7 @@ jobs:
       run: |
         source .venv/bin/activate
         pytest --cov=gh_env_manager tests
-        pytest --cov=gh_env_manager tests | grep 'TOTAL' | grep  -E -i -o '([0-9]+)%'
-        python badges/badgecreator.py
+        python badges/badgecreator.py 
 
     - name: Commit changes
       uses: EndBug/add-and-commit@v9
@@ -37,8 +36,3 @@ jobs:
         default_author: github_actions
         message: 'chore: update coverage badge'
         add: '*.svg'
-    
-    # - name: Build and publish
-    #   run: |
-    #     poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
-    #     poetry publish --build --no-interaction
