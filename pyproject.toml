@@ -12,6 +12,8 @@ gh-env-manager = "gh_env_manager.main:app"
 [tool.poetry.dependencies]
 python = "^3.9"
 typer = {extras = ["all"], version = "^0.7.0"}
+requests = "^2.28.2"
+pyyaml = "^6.0"
 
 [build-system]
 requires = ["poetry-core"]

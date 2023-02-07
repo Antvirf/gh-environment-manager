@@ -2,7 +2,15 @@
 
 ## Installation
 
-## Quickstart
+```bash
+pip install gh-env-manager
+```
+
+## Quick start guide
+
+```bash
+gh-env-manager path_to_your_env_file.yml
+```
 
 ---
 
