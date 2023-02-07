@@ -1,4 +1,5 @@
 *.env*
 *.pyc
+.coverage
 __pycache__/
 dist/
