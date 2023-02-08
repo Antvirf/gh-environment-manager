@@ -1,8 +1,8 @@
-from nacl import encoding, public
-from base64 import b64encode
 import logging
+from base64 import b64encode
 
 import requests
+from nacl import encoding, public
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -199,7 +199,12 @@ class GitHubApi:
         )
         return _response_data
 
-    def create_secrets(self, entity_name: str, secrets_list: list):
+    def create_secrets(self, entity_name: str, data: dict):
+
+        if "secrets" not in data:
+            return
+        secrets_list = data["secrets"]
+
         logging.info("Syncing %s '%s': Secrets to create: %s",
                      self.current_parent_type,
                      entity_name,
@@ -212,7 +217,12 @@ class GitHubApi:
                 secret_value=secret["secretValue"]
             )
 
-    def create_variables(self, entity_name: str, variables_list: list):
+    def create_variables(self, entity_name: str, data: dict):
+
+        if "variables" not in data:
+            return
+        variables_list = data["variables"]
+
         logging.info("Syncing %s '%s': Variables to create: %s",
                      self.current_parent_type,
                      entity_name,
