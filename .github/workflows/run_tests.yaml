@@ -4,8 +4,11 @@ on:
   push:
     branches: ["*"]
 
+env:
+  PYLINT_THRESHOLD: 9.5
+
 jobs:
-  test-and-create-coverage:
+  main-workflow:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -21,7 +24,13 @@ jobs:
         installer-parallel: true
 
     - name: Install dependencies
-      run: poetry install --no-interaction
+      run: |
+        poetry install --no-interaction
+
+    - name: Run pylint
+      run: |
+        python -m pip install pylint
+        python -m pylint --fail-under ${{env.PYLINT_THRESHOLD}} $(git ls-files '*.py')
 
     - name: Run tests and create coverage badge
       run: |
@@ -29,7 +38,7 @@ jobs:
         pytest --cov=gh_env_manager tests
         python badges/badgecreator.py 
 
-    - name: Commit changes
+    - name: Commit coverage badge
       uses: EndBug/add-and-commit@v9
       with:
         default_author: github_actions
