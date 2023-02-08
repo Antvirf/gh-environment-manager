@@ -84,7 +84,8 @@ class YamlEnv:
         # validate entity names
         invalid_names_were_found = False
         for entity in ["secretName", "variableName"]:
-            for entity_name in [x for x in gen_dict_extract(entity, self.data)]:
+            # for entity_name in [x for x in gen_dict_extract(entity, self.data)]:
+            for entity_name in list(gen_dict_extract(entity, self.data)):
                 if not entity_name_is_valid(entity_name):
                     logging.warning(
                         "%s '%s' is invalid and will be ignored.", entity, entity_name)
