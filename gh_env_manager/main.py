@@ -18,8 +18,48 @@ logging.basicConfig(format='%(levelname)s: %(message)s')
 app = typer.Typer()
 
 
-@app.command()
-def main(
+@app.command(help="Read given YAML file and output the interpreted contents.")
+def read(path_to_file: str = typer.Argument(...)):
+    yaml_env_file = YamlEnv(path_to_file)
+    yaml_dict = yaml_env_file.get_dict()
+    print(
+        f"\nConfig file from {path_to_file} interpreted successfully:\n", yaml_env_file, end="\n")
+
+
+@app.command(help="Fetch secrets and variables from the GitHub repositories provided in your "
+             "environment YAML file.")
+def fetch(path_to_file: str = typer.Argument(...)):
+    # read yaml into environments dictionary
+    yaml_env_file = YamlEnv(path_to_file)
+    yaml_dict = yaml_env_file.get_dict_containers_only()
+
+    if "GH_SECRET_SYNC_KEY" not in yaml_dict:
+        raise ValueError(
+            "'GH_SECRET_SYNC_KEY' not found in the given .env file, aborting")
+
+    for repo_name, repo_data in (yaml_dict["repositories"] if "repositories" in yaml_dict else {}).items():
+        repo_api = RepositoryGitHubApi(
+            yaml_dict["GH_SECRET_SYNC_KEY"], repo_name)
+
+        yaml_dict["repositories"][repo_name]["secrets"] = repo_api.list_secrets()
+        yaml_dict["repositories"][repo_name]["variables"] = repo_api.list_variables()
+
+        for env_name, env_data in (repo_data["environments"] if "environments" in repo_data else {}).items():
+            env_api = EnvironmentGitHubApi(
+                yaml_dict["GH_SECRET_SYNC_KEY"],
+                repository=repo_name,
+                environment_name=env_name)
+
+            yaml_dict["repositories"][repo_name]["environments"][env_name]["secrets"] = env_api.list_secrets()
+            yaml_dict["repositories"][repo_name]["environments"][env_name]["variables"] = env_api.list_variables()
+
+    print(yaml_env_file)
+
+
+@ app.command(help="Update secrets and variables of the GitHub repositories using data from the "
+              "provided YAML file. By default, existing secrets or variables are NOT overwritten. "
+              "Try 'gh-env-manager update --help' to view the available options.")
+def update(
     path_to_file: str = typer.Argument(...),  # mandatory
     overwrite: Optional[bool] = typer.Option(
         False,
@@ -41,7 +81,8 @@ def main(
     print(f"{delete_nonexisting=}")
 
     # read yaml into environments dictionary
-    yaml_dict = YamlEnv(".env.yaml").get_dict()
+    yaml_env_file = YamlEnv(path_to_file)
+    yaml_dict = yaml_env_file.get_dict()
 
     if "GH_SECRET_SYNC_KEY" not in yaml_dict:
         raise ValueError(
@@ -52,8 +93,6 @@ def main(
     #     api = OrganizationGitHubApi()
     #     repo_api.create_secrets(repo_name, repo_data)
     #     repo_api.create_variables(repo_name, repo_data)
-
-    # here - somehow split the dict into 'new' vs. 'existing to update' vs. 'for deletion'
 
     # process repositories, if available in the dictionary
     for repo_name, repo_data in (yaml_dict["repositories"] if "repositories" in yaml_dict else {}).items():

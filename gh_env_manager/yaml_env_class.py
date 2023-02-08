@@ -1,3 +1,4 @@
+import copy
 import logging
 import os
 import re
@@ -23,8 +24,8 @@ def remove_null_keys(input_dict: dict):
                 remove_null_keys(value)
 
 
-def remove_entities_with_malformed_names(input_dict: dict):
-    """Remove of dict entries where the entity name is not valid.
+def remove_entities_with_malformed_names(input_dict: dict) -> None:
+    """Removal of dict entries where the entity name is not valid.
     Adapted from remove_null_keys() above."""
 
     if isinstance(input_dict, list):
@@ -38,6 +39,21 @@ def remove_entities_with_malformed_names(input_dict: dict):
                 input_dict.pop(key.replace("Name", "Value"))
             else:
                 remove_entities_with_malformed_names(value)
+
+
+def remove_specific_keys(input_dict: dict, keys_to_drop: list) -> None:
+    """Removal of dict entries where the key is in the given list.
+    Adapted from remove_null_keys() above."""
+
+    if isinstance(input_dict, list):
+        for entry in input_dict:
+            remove_specific_keys(entry, keys_to_drop)
+    elif isinstance(input_dict, dict):
+        for key, value in input_dict.copy().items():
+            if key in keys_to_drop:
+                input_dict.pop(key)
+            else:
+                remove_specific_keys(value, keys_to_drop)
 
 
 def gen_dict_extract(key, var):
@@ -65,22 +81,7 @@ def entity_name_is_valid(input_string: str) -> bool:
 
 
 class YamlEnv:
-    def __init__(self, path_to_yaml_env_file: str):
-        self.data = {}
-        if not os.path.isfile(path_to_yaml_env_file):
-            raise FileNotFoundError(path_to_yaml_env_file)
-
-        try:
-            # read plain yaml
-            with open(path_to_yaml_env_file, 'r') as file_stream:
-                self.data = yaml.safe_load(file_stream)
-
-        except yaml.YAMLError as error_msg:
-            logging.error("Could not process %s, please check syntax. Error: %s",
-                          path_to_yaml_env_file,
-                          error_msg
-                          )
-
+    def validate(self):
         # validate entity names
         invalid_names_were_found = False
         for entity in ["secretName", "variableName"]:
@@ -104,5 +105,60 @@ class YamlEnv:
         # validate structure - remove any empty keys
         remove_null_keys(self.data)
 
+    def __init__(self, path_to_yaml_env_file: str):
+        self.data = {}
+        if not os.path.isfile(path_to_yaml_env_file):
+            raise FileNotFoundError(path_to_yaml_env_file)
+
+        try:
+            # read plain yaml
+            with open(path_to_yaml_env_file, 'r') as file_stream:
+                self.data = yaml.safe_load(file_stream)
+
+        except yaml.YAMLError as error_msg:
+            logging.error("Could not process %s, please check syntax. Error: %s",
+                          path_to_yaml_env_file,
+                          error_msg
+                          )
+
+        self.validate()
+
     def get_dict(self) -> dict:
         return self.data
+
+    def get_dict_containers_only(self) -> dict:
+        keys_to_drop = ["secretName", "secretValue", "secrets",
+                        "variableName", "variableValue", "variables"]
+        remove_specific_keys(self.data, keys_to_drop)
+        return self.data
+
+    # def __repr__(self) -> str:
+    #     return str(self.data)
+
+    def __str__(self) -> str:
+        data_dict = copy.deepcopy(self.data)
+        remove_null_keys(data_dict)
+
+        string = """"""
+
+        # process repos
+        for repo_name, repo_data in (data_dict["repositories"] if "repositories" in data_dict else {}).items():
+            string += f"REPOSITORY: {repo_name}\n"
+
+            if "secrets" in repo_data:
+                for entry in repo_data["secrets"]:
+                    string += f"\tSECRET: {entry['secretName']}={entry['secretValue'] if 'secretValue' in entry else '???'}\n"
+            if "variables" in repo_data:
+                for entry in repo_data["variables"]:
+                    string += f"\tVARIABLE: {entry['variableName']}={entry['variableValue']}\n"
+
+            # process envs within repositories
+            for env_name, env_data in (repo_data["environments"] if "environments" in repo_data else {}).items():
+                if "secrets" in env_data:
+                    for entry in env_data["secrets"]:
+                        string += f"\tENVIRONMENT {env_name}: SECRET: {entry['secretName']}={entry['secretValue'] if 'secretValue' in entry else '???'}\n"
+                if "variables" in env_data:
+                    for entry in env_data["variables"]:
+                        string += f"\tENVIRONMENT {env_name}: VARIABLE: {entry['variableName']}={entry['variableValue']}\n"
+
+        return string

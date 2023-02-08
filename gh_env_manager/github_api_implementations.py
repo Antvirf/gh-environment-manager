@@ -23,8 +23,7 @@ class RepositoryGitHubApi(GitHubApi):
 class EnvironmentGitHubApi(GitHubApi):
     def __init__(self, private_key: str, repository: str, environment_name: str) -> None:
         super().__init__(private_key)
-        self.current_parent_type = f"REPOSITORY ENVIRONMENT '{repository}':"
-
+        self.current_parent_type = f"REPOSITORY {repository} ENVIRONMENT '{environment_name}':"
         self.get_repository_id(repository)  # update repository id
 
         self.get_public_key_endpoint = f"repositories/{self.repository_id}/environments/{environment_name}/secrets/public-key"

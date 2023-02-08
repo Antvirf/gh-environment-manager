@@ -148,7 +148,13 @@ class GitHubApi:
         _response_data, _ = self._make_request(
             endpoint=self.list_secret_endpoint
         )
-        return _response_data
+        list_of_secrets = []
+        for secret in _response_data["secrets"]:
+            list_of_secrets.append({
+                "secretName": secret["name"],
+                "secretValue": None
+            })
+        return list_of_secrets
 
     def _create_variable(self, variable_name: str, variable_value: str):
         """Creates a given variable, or patches it in case of a conflict."""
@@ -197,7 +203,13 @@ class GitHubApi:
         _response_data, _ = self._make_request(
             endpoint=self.list_variable_endpoint
         )
-        return _response_data
+        list_of_variables = []
+        for variable in _response_data["variables"]:
+            list_of_variables.append({
+                "variableName": variable["name"],
+                "variableValue": variable["value"]
+            })
+        return list_of_variables
 
     def create_secrets(self, entity_name: str, data: dict):
 
