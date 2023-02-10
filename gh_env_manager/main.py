@@ -21,39 +21,56 @@ app = typer.Typer()
 @app.command(help="Read given YAML file and output the interpreted contents.")
 def read(path_to_file: str = typer.Argument(...)):
     yaml_env_file = YamlEnv(path_to_file)
-    yaml_dict = yaml_env_file.get_dict()
     print(
-        f"\nConfig file from {path_to_file} interpreted successfully:\n", yaml_env_file, end="\n")
+        f"\nConfig file from {path_to_file} interpreted successfully:\n", yaml_env_file)
 
 
-@app.command(help="Fetch secrets and variables from the GitHub repositories provided in your "
-             "environment YAML file.")
-def fetch(path_to_file: str = typer.Argument(...)):
+@app.command(help="Fetch all secrets and all variables from the specific GitHub repositories"
+             "provided in your environment YAML file.")
+def fetch(path_to_file: str = typer.Argument(...),
+          output: bool = typer.Option(True, help="Option that enables/disables output.")):
     # read yaml into environments dictionary
-    yaml_env_file = YamlEnv(path_to_file)
-    yaml_dict = yaml_env_file.get_dict_containers_only()
+    yaml_env = YamlEnv(path_to_file, output=output)
 
-    if "GH_SECRET_SYNC_KEY" not in yaml_dict:
+    if not yaml_env.key:
         raise ValueError(
             "'GH_SECRET_SYNC_KEY' not found in the given .env file, aborting")
 
-    for repo_name, repo_data in (yaml_dict["repositories"] if "repositories" in yaml_dict else {}).items():
-        repo_api = RepositoryGitHubApi(
-            yaml_dict["GH_SECRET_SYNC_KEY"], repo_name)
+    gh_env = YamlEnv()
+    if output:
+        print(gh_env)
 
-        yaml_dict["repositories"][repo_name]["secrets"] = repo_api.list_secrets()
-        yaml_dict["repositories"][repo_name]["variables"] = repo_api.list_variables()
+    all_repositories = yaml_env.get_repositories()
+    for repo_name in all_repositories:
+        for env_name in yaml_env.get_environments(repo_name):
+            if env_name is None:
+                repo_api = RepositoryGitHubApi(
+                    private_key=yaml_env.key,
+                    repository=repo_name
+                )
+                entities = {
+                    "secrets": repo_api.list_secrets(),
+                    "variables": repo_api.list_variables()
+                }
+                gh_env.append_entities(
+                    entities, repo=repo_name, env=env_name)
+            else:
+                env_api = EnvironmentGitHubApi(
+                    private_key=yaml_env.key,
+                    repository=repo_name,
+                    environment_name=env_name
+                )
+                entities = {
+                    "secrets": env_api.list_secrets(),
+                    "variables": env_api.list_variables()
+                }
+                gh_env.append_entities(
+                    entities, repo=repo_name, env=env_name)
 
-        for env_name, env_data in (repo_data["environments"] if "environments" in repo_data else {}).items():
-            env_api = EnvironmentGitHubApi(
-                yaml_dict["GH_SECRET_SYNC_KEY"],
-                repository=repo_name,
-                environment_name=env_name)
-
-            yaml_dict["repositories"][repo_name]["environments"][env_name]["secrets"] = env_api.list_secrets()
-            yaml_dict["repositories"][repo_name]["environments"][env_name]["variables"] = env_api.list_variables()
-
-    print(yaml_env_file)
+    if output:
+        print("Current environment:")
+        print(gh_env)
+    return gh_env
 
 
 @ app.command(help="Update secrets and variables of the GitHub repositories using data from the "
@@ -76,40 +93,52 @@ def update(
         help="If enabled, delete secrets and variables that are not found in the provided YAML file."),
 ):
 
-    print(f"{path_to_file=}")
-    print(f"{overwrite=}")
-    print(f"{delete_nonexisting=}")
+    logging.debug(f"{path_to_file=}")
+    logging.debug(f"{overwrite=}")
+    logging.debug(f"{delete_nonexisting=}")
 
     # read yaml into environments dictionary
-    yaml_env_file = YamlEnv(path_to_file)
-    yaml_dict = yaml_env_file.get_dict()
+    yaml_env = YamlEnv(path_to_file)
 
-    if "GH_SECRET_SYNC_KEY" not in yaml_dict:
+    if not yaml_env.key:
         raise ValueError(
             "'GH_SECRET_SYNC_KEY' not found in the given .env file, aborting")
 
-    # process organizations, if available in the dictionary
-    # for org_name, org_data in (yaml_dict["organizations"] if "organizations" in yaml_dict else {}).items():
-    #     api = OrganizationGitHubApi()
-    #     repo_api.create_secrets(repo_name, repo_data)
-    #     repo_api.create_variables(repo_name, repo_data)
+    # If we're not allowed to overwrite, fetch existing setup and remove corresponding entries.
+    if not overwrite:
+        gh_env = fetch(path_to_file=path_to_file, output=False)
+        logging.debug("----------------YAML before drop:\n %s", str(yaml_env))
+        yaml_env.drop_existing_entities(gh_env)
+        logging.debug("----------------GH contents:\n %s", str(gh_env))
+        logging.debug("----------------YAML after drop:\n %s", str(yaml_env))
 
-    # process repositories, if available in the dictionary
-    for repo_name, repo_data in (yaml_dict["repositories"] if "repositories" in yaml_dict else {}).items():
-        repo_api = RepositoryGitHubApi(
-            yaml_dict["GH_SECRET_SYNC_KEY"], repo_name)
-
-        repo_api.create_secrets(repo_name, repo_data)
-        repo_api.create_variables(repo_name, repo_data)
-
-        for env_name, env_data in (repo_data["environments"] if "environments" in repo_data else {}).items():
-            env_api = EnvironmentGitHubApi(
-                yaml_dict["GH_SECRET_SYNC_KEY"],
-                repository=repo_name,
-                environment_name=env_name)
-
-            env_api.create_secrets(env_name, env_data)
-            env_api.create_variables(env_name, env_data)
+    all_repositories = yaml_env.get_repositories()
+    for repo_name in all_repositories:
+        for env_name in yaml_env.get_environments(repo_name):
+            if env_name is None:
+                repo_api = RepositoryGitHubApi(
+                    private_key=yaml_env.key,
+                    repository=repo_name
+                )
+                repo_api.create_secrets(
+                    entity_name=repo_name,
+                    secrets_list=yaml_env.get_secrets_from_environment(
+                        repo_name, env_name)
+                )
+                # creation
+            else:
+                env_api = EnvironmentGitHubApi(
+                    private_key=yaml_env.key,
+                    repository=repo_name,
+                    environment_name=env_name
+                )
+                # creation
+                env_api.create_variables(
+                    entity_name=repo_name,
+                    variables_list=yaml_env.get_variables_from_environment(
+                        repo_name, env_name)
+                )
+    print("Updates complete.")
 
 
 if __name__ == "__main__":

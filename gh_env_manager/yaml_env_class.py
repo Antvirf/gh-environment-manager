@@ -1,9 +1,10 @@
-import copy
 import logging
 import os
-import re
+from typing import Optional
 
 import yaml
+
+from .secret_variable_entity_class import Secret, Variable
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -24,94 +25,35 @@ def remove_null_keys(input_dict: dict):
                 remove_null_keys(value)
 
 
-def remove_entities_with_malformed_names(input_dict: dict) -> None:
-    """Removal of dict entries where the entity name is not valid.
-    Adapted from remove_null_keys() above."""
-
-    if isinstance(input_dict, list):
-        for entry in input_dict:
-            remove_entities_with_malformed_names(entry)
-    elif isinstance(input_dict, dict):
-        for key, value in input_dict.copy().items():
-            if not entity_name_is_valid(value) and key in ["secretName", "variableName"]:
-                # we need to pop the name as well value
-                input_dict.pop(key)
-                input_dict.pop(key.replace("Name", "Value"))
-            else:
-                remove_entities_with_malformed_names(value)
-
-
-def remove_specific_keys(input_dict: dict, keys_to_drop: list) -> None:
-    """Removal of dict entries where the key is in the given list.
-    Adapted from remove_null_keys() above."""
-
-    if isinstance(input_dict, list):
-        for entry in input_dict:
-            remove_specific_keys(entry, keys_to_drop)
-    elif isinstance(input_dict, dict):
-        for key, value in input_dict.copy().items():
-            if key in keys_to_drop:
-                input_dict.pop(key)
-            else:
-                remove_specific_keys(value, keys_to_drop)
-
-
-def gen_dict_extract(key, var):
-    """Extract all instances of a given key from a dictionary.
-    Adapted from https://stackoverflow.com/a/29652561"""
-    if hasattr(var, 'items'):
-        for k, v in var.items():
-            if k == key:
-                yield v
-            if isinstance(v, dict):
-                for result in gen_dict_extract(key, v):
-                    yield result
-            elif isinstance(v, list):
-                for d in v:
-                    for result in gen_dict_extract(key, d):
-                        yield result
-
-
-def entity_name_is_valid(input_string: str) -> bool:
-    """Validates that the name for a secret or variable is valid according to the GitHub spec.
-    'Secret names can only contain alphanumeric characters ([a-z], [A-Z], [0-9]) or underscores (_).
-    Spaces are not allowed. Must start with a letter ([a-z], [A-Z]) or underscores (_).'
-    """
-    return bool(re.match('^[A-Z_][A-Z0-9_]*$', str(input_string)))
-
-
 class YamlEnv:
-    def validate(self):
+    def validate(self, output=True):
         # validate entity names
-        invalid_names_were_found = False
-        for entity in ["secretName", "variableName"]:
-            # for entity_name in [x for x in gen_dict_extract(entity, self.data)]:
-            for entity_name in list(gen_dict_extract(entity, self.data)):
-                if not entity_name_is_valid(entity_name):
+        if output:
+            for entity in self.data_content:
+                if not entity.name_valid:
                     logging.warning(
-                        "%s '%s' is invalid and will be ignored.", entity, entity_name)
-                    invalid_names_were_found = True
-        if invalid_names_were_found:
-            logger.warning("Please review the syntax of your environment YAML file. "
-                           "As per GitHub spec, secret and variable names can only contain "
-                           "alphanumeric characters ([A-Z], [0-9]) or underscores (_), "
-                           "and must start with either a letter or an underscore. "
-                           "This script enforces UPPER_CASE for all secret and variable names."
-                           )
+                        "%s has an invalid name and will be ignored.", entity)
 
-        # remove invalid names
-        remove_entities_with_malformed_names(self.data)
+            if any([x.name_valid for x in self.data_content]):
+                logger.warning("Please review the syntax of your environment YAML file. "
+                               "As per GitHub spec, secret and variable names can only contain "
+                               "alphanumeric characters ([A-Z], [0-9]) or underscores (_), "
+                               "and must start with either a letter or an underscore. "
+                               "This script enforces UPPER_CASE for all secret and variable names."
+                               )
 
-        # validate structure - remove any empty keys
-        remove_null_keys(self.data)
-
-    def __init__(self, path_to_yaml_env_file: str):
+    def __init__(self, path_to_yaml_env_file: Optional[str] = None, output: bool = True):
         self.data = {}
+        self.key = None
+        self.data_content = []
+
+        if path_to_yaml_env_file is None:
+            return
+
         if not os.path.isfile(path_to_yaml_env_file):
             raise FileNotFoundError(path_to_yaml_env_file)
 
         try:
-            # read plain yaml
             with open(path_to_yaml_env_file, 'r') as file_stream:
                 self.data = yaml.safe_load(file_stream)
 
@@ -121,44 +63,99 @@ class YamlEnv:
                           error_msg
                           )
 
-        self.validate()
+        self.key = self.data.get('GH_SECRET_SYNC_KEY', None)
+        remove_null_keys(self.data)
 
-    def get_dict(self) -> dict:
-        return self.data
+        # load data structure
+        for repo_name, repo_data in (self.data["repositories"] if "repositories" in self.data else {}).items():
+            self.append_entities(
+                repo_data,
+                repo=repo_name)
+            for env_name in repo_data.get("environments", []):
+                self.append_entities(
+                    repo_data["environments"][env_name],
+                    repo=repo_name,
+                    env=env_name)
 
-    def get_dict_containers_only(self) -> dict:
-        keys_to_drop = ["secretName", "secretValue", "secrets",
-                        "variableName", "variableValue", "variables"]
-        remove_specific_keys(self.data, keys_to_drop)
-        return self.data
-
-    # def __repr__(self) -> str:
-    #     return str(self.data)
+        self.validate(output)
 
     def __str__(self) -> str:
-        data_dict = copy.deepcopy(self.data)
-        remove_null_keys(data_dict)
-
         string = """"""
 
         # process repos
-        for repo_name, repo_data in (data_dict["repositories"] if "repositories" in data_dict else {}).items():
+        all_repositories = self.get_repositories()
+
+        for repo_name in all_repositories:
             string += f"REPOSITORY: {repo_name}\n"
-
-            if "secrets" in repo_data:
-                for entry in repo_data["secrets"]:
-                    string += f"\tSECRET: {entry['secretName']}={entry['secretValue'] if 'secretValue' in entry else '???'}\n"
-            if "variables" in repo_data:
-                for entry in repo_data["variables"]:
-                    string += f"\tVARIABLE: {entry['variableName']}={entry['variableValue']}\n"
-
-            # process envs within repositories
-            for env_name, env_data in (repo_data["environments"] if "environments" in repo_data else {}).items():
-                if "secrets" in env_data:
-                    for entry in env_data["secrets"]:
-                        string += f"\tENVIRONMENT {env_name}: SECRET: {entry['secretName']}={entry['secretValue'] if 'secretValue' in entry else '???'}\n"
-                if "variables" in env_data:
-                    for entry in env_data["variables"]:
-                        string += f"\tENVIRONMENT {env_name}: VARIABLE: {entry['variableName']}={entry['variableValue']}\n"
-
+            for env_name in self.get_environments(repo_name):
+                string += "\n".join([(f"\t{entity}")
+                                     for entity in self.get_entities_from_environment(repo_name, env_name)]) + "\n"
         return string
+
+    def get_active_data(self) -> list:
+        return [x for x in self.data_content if x.is_active]
+
+    def get_repositories(self) -> list:
+        return list(set([x.parent_repo for x in self.get_active_data()]))
+
+    def get_environments(self, repository) -> list:
+        # also returns a single None here, for when you have stuff in 'no' environment
+        return list(set([x.parent_env for x in self.get_active_data() if x.parent_repo == repository]))
+
+    def get_entities_from_environment(self, repository, environment) -> list:
+        return [x for x in self.get_active_data() if (x.parent_repo == repository and x.parent_env == environment)]
+
+    def get_secrets_from_environment(self, repository, environment) -> list:
+        return [x for x in self.get_entities_from_environment(repository, environment) if isinstance(x, Secret)]
+
+    def get_variables_from_environment(self, repository, environment) -> list:
+        return [x for x in self.get_entities_from_environment(repository, environment) if isinstance(x, Variable)]
+
+    def append_entities(self,
+                        input_data: dict,
+                        repo: str,
+                        env: Optional[str] = None,
+                        org: Optional[str] = None
+                        ):
+        found_entities = []
+        for entity in input_data.get("secrets", []):
+            found_entities.append(
+                Secret(name=next(iter(entity.keys())),
+                       value=next(iter(entity.values())),
+                       repo=repo,
+                       env=env,
+                       org=org
+                       ))
+        for entity in input_data.get("variables", []):
+            found_entities.append(
+                Variable(name=next(iter(entity.keys())),
+                         value=next(iter(entity.values())),
+                         repo=repo,
+                         env=env,
+                         org=org
+                         ))
+        self.data_content += found_entities
+
+    def drop_existing_entities(self, other_env):
+        """'Left minus join' style operation. Take the entities available in self, and check if
+        any of them exist in the 'other'. If they do, delete them.
+        Also drops ignored/inactive entities to arrive at a 'clean' list to update."""
+
+        overlapping_self_entity_indices = []
+        for other_entity in other_env.get_active_data():
+            for i, self_entity in enumerate(self.get_active_data()):
+                if other_entity == self_entity:
+                    # add only things that don't match
+                    overlapping_self_entity_indices.append(i)
+
+        non_overlapping_self_entities = []
+        for i, self_entity in enumerate(self.get_active_data()):
+            if i not in overlapping_self_entity_indices:
+                non_overlapping_self_entities.append(
+                    self_entity
+                )
+            else:
+                print(f"\tSkipping due to no-overwrite: {self_entity}")
+
+        # This will also drop inactive entires.
+        self.data_content = non_overlapping_self_entities

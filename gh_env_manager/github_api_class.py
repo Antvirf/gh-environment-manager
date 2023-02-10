@@ -151,8 +151,7 @@ class GitHubApi:
         list_of_secrets = []
         for secret in _response_data["secrets"]:
             list_of_secrets.append({
-                "secretName": secret["name"],
-                "secretValue": None
+                secret["name"]: None
             })
         return list_of_secrets
 
@@ -206,43 +205,39 @@ class GitHubApi:
         list_of_variables = []
         for variable in _response_data["variables"]:
             list_of_variables.append({
-                "variableName": variable["name"],
-                "variableValue": variable["value"]
+                variable["name"]: variable["value"]
             })
         return list_of_variables
 
-    def create_secrets(self, entity_name: str, data: dict):
-
-        if "secrets" not in data:
+    def create_secrets(self, entity_name: str, secrets_list: list):
+        if not secrets_list:
             return
-        secrets_list = data["secrets"]
 
         logging.info("Syncing %s '%s': Secrets to create: %s",
                      self.current_parent_type,
                      entity_name,
                      str([
-                         x["secretName"] for x in secrets_list
+                         x.name for x in secrets_list
                      ]))
+
         for secret in secrets_list:
             self._create_secret(
-                secret_name=secret["secretName"],
-                secret_value=secret["secretValue"]
+                secret_name=secret.name,
+                secret_value=secret.value
             )
 
-    def create_variables(self, entity_name: str, data: dict):
-
-        if "variables" not in data:
+    def create_variables(self, entity_name: str, variables_list: list):
+        if not variables_list:
             return
-        variables_list = data["variables"]
 
         logging.info("Syncing %s '%s': Variables to create: %s",
                      self.current_parent_type,
                      entity_name,
                      str([
-                         x["variableName"] for x in variables_list
+                         x.name for x in variables_list
                      ]))
         for variable in variables_list:
             self._create_variable(
-                variable_name=variable["variableName"],
-                variable_value=variable["variableValue"]
+                variable_name=variable.name,
+                variable_value=variable.value
             )
