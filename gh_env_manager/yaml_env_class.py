@@ -4,7 +4,8 @@ from typing import Optional
 
 import yaml
 
-from .secret_variable_entity_class import Secret, Variable
+from .secret_variable_entity_class import (Secret, SecretVariableEntity,
+                                           Variable)
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -92,6 +93,12 @@ class YamlEnv:
                                      for entity in self.get_entities_from_environment(repo_name, env_name)]) + "\n"
         return string
 
+    def __contains__(self, item: SecretVariableEntity):
+        for entity in self.data_content:
+            if entity == item:
+                return True
+        return False
+
     def get_active_data(self) -> list:
         return [x for x in self.data_content if x.is_active]
 
@@ -136,26 +143,41 @@ class YamlEnv:
                          ))
         self.data_content += found_entities
 
-    def drop_existing_entities(self, other_env):
+    def get_existing_entities(self, other_env) -> list:
         """'Left minus join' style operation. Take the entities available in self, and check if
-        any of them exist in the 'other'. If they do, delete them.
-        Also drops ignored/inactive entities to arrive at a 'clean' list to update."""
+        any of them exist in the 'other'. If they do, delete them."""
 
-        overlapping_self_entity_indices = []
-        for other_entity in other_env.get_active_data():
-            for i, self_entity in enumerate(self.get_active_data()):
-                if other_entity == self_entity:
-                    # add only things that don't match
-                    overlapping_self_entity_indices.append(i)
+        indices_overlapping_self_entity = []
+        for i, self_entity in enumerate(self.get_active_data()):
+            if self_entity in other_env:
+                indices_overlapping_self_entity.append(i)
 
         non_overlapping_self_entities = []
         for i, self_entity in enumerate(self.get_active_data()):
-            if i not in overlapping_self_entity_indices:
+            if i not in indices_overlapping_self_entity:
                 non_overlapping_self_entities.append(
                     self_entity
                 )
             else:
                 print(f"\tSkipping due to no-overwrite: {self_entity}")
 
-        # This will also drop inactive entires.
-        self.data_content = non_overlapping_self_entities
+        return non_overlapping_self_entities
+
+    def get_missing_entities(self, other_env) -> list:
+        """'right minus join' style operation. Take the entities available in other, and check if
+        any of them exist in the 'self'. If they do, delete them."""
+
+        indices_entries_only_in_other = []
+        for i, other_entity in enumerate(other_env.get_active_data()):
+            if other_entity not in self:
+                print("NOT in YAML:", other_entity)
+                indices_entries_only_in_other.append(i)
+
+        entities_only_in_other = []
+        for i, other_entity in enumerate(other_env.get_active_data()):
+            if i in indices_entries_only_in_other:
+                entities_only_in_other.append(
+                    other_entity
+                )
+
+        return entities_only_in_other

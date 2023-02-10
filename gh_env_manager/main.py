@@ -90,7 +90,8 @@ def update(
         "--delete-nonexisting",
         "-d",
         show_default=True,
-        help="If enabled, delete secrets and variables that are not found in the provided YAML file."),
+        help="If enabled, delete secrets and variables from your GitHub repositories "
+        "that are not found in the provided YAML file."),
 ):
 
     logging.debug(f"{path_to_file=}")
@@ -104,13 +105,21 @@ def update(
         raise ValueError(
             "'GH_SECRET_SYNC_KEY' not found in the given .env file, aborting")
 
-    # If we're not allowed to overwrite, fetch existing setup and remove corresponding entries.
-    if not overwrite:
+    # If we're not allowed to overwrite, or need to delete later, we need to now fetch from GH
+    if (not overwrite) or (delete_nonexisting):
         gh_env = fetch(path_to_file=path_to_file, output=False)
-        logging.debug("----------------YAML before drop:\n %s", str(yaml_env))
-        yaml_env.drop_existing_entities(gh_env)
         logging.debug("----------------GH contents:\n %s", str(gh_env))
-        logging.debug("----------------YAML after drop:\n %s", str(yaml_env))
+        logging.debug("----------------YAML contents:\n %s", str(yaml_env))
+
+        existing_in_env_only = yaml_env.get_existing_entities(gh_env)
+        existing_in_gh_only = yaml_env.get_missing_entities(
+            gh_env)  # to be used for deletions later
+
+        # Drop any entries that exist in GH already. Also drops inactive/invalid entries.
+        if not overwrite:
+            yaml_env.data_content = existing_in_env_only
+            logging.debug(
+                "----------------YAML after drop:\n %s", str(yaml_env))
 
     all_repositories = yaml_env.get_repositories()
     for repo_name in all_repositories:
@@ -125,20 +134,35 @@ def update(
                     secrets_list=yaml_env.get_secrets_from_environment(
                         repo_name, env_name)
                 )
-                # creation
+                repo_api.create_variables(
+                    entity_name=repo_name,
+                    variables_list=yaml_env.get_variables_from_environment(
+                        repo_name, env_name)
+                )
             else:
                 env_api = EnvironmentGitHubApi(
                     private_key=yaml_env.key,
                     repository=repo_name,
                     environment_name=env_name
                 )
-                # creation
+                env_api.create_secrets(
+                    entity_name=repo_name,
+                    secrets_list=yaml_env.get_secrets_from_environment(
+                        repo_name, env_name)
+                )
                 env_api.create_variables(
                     entity_name=repo_name,
                     variables_list=yaml_env.get_variables_from_environment(
                         repo_name, env_name)
                 )
     print("Updates complete.")
+
+    if delete_nonexisting:
+        print(existing_in_gh_only)
+        # Adapt the YAML ENV class so I can INIT it from a list of entries, without a file
+        # Then init that here
+        # Then do the standard loop and make sure delete works
+        # And finally, move all of this standard to the YAML ENV class so we can keep this main file very clean
 
 
 if __name__ == "__main__":

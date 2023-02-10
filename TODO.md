@@ -2,9 +2,10 @@
 
 Functionality
 
-1. Proper default behaviour to NOT overwrite anything
-1. Overwrite flag to overwrite
+1. ~~Proper default behaviour to NOT overwrite anything~~
+1. ~~Overwrite flag to overwrite~~
 1. Delete flag to delete
+1. Restructure again to simplify main.py
 
 Administrative
 
