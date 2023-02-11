@@ -35,7 +35,7 @@ class YamlEnv:
                     logging.warning(
                         "%s has an invalid name and will be ignored.", entity)
 
-            if any([x.name_valid for x in self.data_content]):
+            if any([not x.name_valid for x in self.data_content]):
                 logger.warning("Please review the syntax of your environment YAML file. "
                                "As per GitHub spec, secret and variable names can only contain "
                                "alphanumeric characters ([A-Z], [0-9]) or underscores (_), "
@@ -45,19 +45,20 @@ class YamlEnv:
 
     def __init__(self, path_to_yaml_env_file: Optional[str] = None, output: bool = True):
         self.data = {}
-        self.key = None
+        self.key = ""
         self.data_content = []
 
         if path_to_yaml_env_file is None:
             return
 
         if not os.path.isfile(path_to_yaml_env_file):
-            raise FileNotFoundError(path_to_yaml_env_file)
+            logging.error(
+                f"File '{path_to_yaml_env_file}' not found, aborting..")
+            quit()
 
         try:
             with open(path_to_yaml_env_file, 'r') as file_stream:
                 self.data = yaml.safe_load(file_stream)
-
         except yaml.YAMLError as error_msg:
             logging.error("Could not process %s, please check syntax. Error: %s",
                           path_to_yaml_env_file,
@@ -158,8 +159,6 @@ class YamlEnv:
                 non_overlapping_self_entities.append(
                     self_entity
                 )
-            else:
-                print(f"\tSkipping due to no-overwrite: {self_entity}")
 
         return non_overlapping_self_entities
 
@@ -170,7 +169,6 @@ class YamlEnv:
         indices_entries_only_in_other = []
         for i, other_entity in enumerate(other_env.get_active_data()):
             if other_entity not in self:
-                print("NOT in YAML:", other_entity)
                 indices_entries_only_in_other.append(i)
 
         entities_only_in_other = []
@@ -181,3 +179,14 @@ class YamlEnv:
                 )
 
         return entities_only_in_other
+
+
+class YamlEnvFromList(YamlEnv):
+    def __init__(self, data_list: list, output: bool = True):
+        self.data = {}
+        self.key = ""
+        self.data_content = []
+
+        self.data_content = [x for x in data_list]
+
+        self.validate(output)

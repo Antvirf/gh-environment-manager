@@ -9,7 +9,7 @@ import typer
 
 from .github_api_implementations import (EnvironmentGitHubApi,
                                          RepositoryGitHubApi)
-from .yaml_env_class import YamlEnv
+from .yaml_env_class import YamlEnv, YamlEnvFromList
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -22,7 +22,7 @@ app = typer.Typer()
 def read(path_to_file: str = typer.Argument(...)):
     yaml_env_file = YamlEnv(path_to_file)
     print(
-        f"\nConfig file from {path_to_file} interpreted successfully:\n", yaml_env_file)
+        f"Config file from {path_to_file} interpreted successfully:\n", yaml_env_file)
 
 
 @app.command(help="Fetch all secrets and all variables from the specific GitHub repositories"
@@ -31,15 +31,13 @@ def fetch(path_to_file: str = typer.Argument(...),
           output: bool = typer.Option(True, help="Option that enables/disables output.")):
     # read yaml into environments dictionary
     yaml_env = YamlEnv(path_to_file, output=output)
-
+    gh_env = YamlEnv()
     if not yaml_env.key:
         raise ValueError(
             "'GH_SECRET_SYNC_KEY' not found in the given .env file, aborting")
 
-    gh_env = YamlEnv()
-    if output:
-        print(gh_env)
-
+    logging.info(
+        "Fetching current state of your repositories from GitHub...")
     all_repositories = yaml_env.get_repositories()
     for repo_name in all_repositories:
         for env_name in yaml_env.get_environments(repo_name):
@@ -48,27 +46,31 @@ def fetch(path_to_file: str = typer.Argument(...),
                     private_key=yaml_env.key,
                     repository=repo_name
                 )
-                entities = {
-                    "secrets": repo_api.list_secrets(),
-                    "variables": repo_api.list_variables()
-                }
+
                 gh_env.append_entities(
-                    entities, repo=repo_name, env=env_name)
+                    {
+                        "secrets": repo_api.list_secrets(),
+                        "variables": repo_api.list_variables()
+                    },
+                    repo=repo_name,
+                    env=env_name
+                )
             else:
                 env_api = EnvironmentGitHubApi(
                     private_key=yaml_env.key,
                     repository=repo_name,
                     environment_name=env_name
                 )
-                entities = {
-                    "secrets": env_api.list_secrets(),
-                    "variables": env_api.list_variables()
-                }
                 gh_env.append_entities(
-                    entities, repo=repo_name, env=env_name)
+                    {
+                        "secrets": env_api.list_secrets(),
+                        "variables": env_api.list_variables()
+                    },
+                    repo=repo_name,
+                    env=env_name
+                )
 
     if output:
-        print("Current environment:")
         print(gh_env)
     return gh_env
 
@@ -92,8 +94,16 @@ def update(
         show_default=True,
         help="If enabled, delete secrets and variables from your GitHub repositories "
         "that are not found in the provided YAML file."),
-):
+    delete_nonexisting_without_prompt: Optional[bool] = typer.Option(
+        False,
+        "--delete-nonexisting-without-prompt",
+        show_default=True,
+        help="Applies the same commands as delete_nonexisting, but without prompting the user "
+        "for confirmation."),
 
+):
+    if delete_nonexisting_without_prompt:
+        delete_nonexisting = True
     logging.debug(f"{path_to_file=}")
     logging.debug(f"{overwrite=}")
     logging.debug(f"{delete_nonexisting=}")
@@ -121,48 +131,85 @@ def update(
             logging.debug(
                 "----------------YAML after drop:\n %s", str(yaml_env))
 
+    number_of_items_to_update = len(yaml_env.get_active_data())
+    if number_of_items_to_update == 0:
+        logging.info("Nothing to update or add.")
+    else:
+        logging.info(f"{number_of_items_to_update} entities will be updated.")
+
     all_repositories = yaml_env.get_repositories()
     for repo_name in all_repositories:
         for env_name in yaml_env.get_environments(repo_name):
             if env_name is None:
-                repo_api = RepositoryGitHubApi(
+                RepositoryGitHubApi(
                     private_key=yaml_env.key,
                     repository=repo_name
-                )
-                repo_api.create_secrets(
-                    entity_name=repo_name,
-                    secrets_list=yaml_env.get_secrets_from_environment(
-                        repo_name, env_name)
-                )
-                repo_api.create_variables(
-                    entity_name=repo_name,
-                    variables_list=yaml_env.get_variables_from_environment(
-                        repo_name, env_name)
+                )\
+                    .create_entities(
+                        entities_list=yaml_env.get_entities_from_environment(
+                            repo_name, env_name)
                 )
             else:
-                env_api = EnvironmentGitHubApi(
+                EnvironmentGitHubApi(
                     private_key=yaml_env.key,
                     repository=repo_name,
                     environment_name=env_name
+                )\
+                    .create_entities(
+                        entities_list=yaml_env.get_entities_from_environment(
+                            repo_name, env_name)
                 )
-                env_api.create_secrets(
-                    entity_name=repo_name,
-                    secrets_list=yaml_env.get_secrets_from_environment(
-                        repo_name, env_name)
-                )
-                env_api.create_variables(
-                    entity_name=repo_name,
-                    variables_list=yaml_env.get_variables_from_environment(
-                        repo_name, env_name)
-                )
-    print("Updates complete.")
 
-    if delete_nonexisting:
-        print(existing_in_gh_only)
-        # Adapt the YAML ENV class so I can INIT it from a list of entries, without a file
-        # Then init that here
-        # Then do the standard loop and make sure delete works
-        # And finally, move all of this standard to the YAML ENV class so we can keep this main file very clean
+    if number_of_items_to_update != 0:
+        logging.info(
+            f"Updates complete, {len(yaml_env.get_active_data())} entities changed.")
+
+    if not delete_nonexisting:
+        return
+
+    for_deletion_env = YamlEnvFromList(existing_in_gh_only, output=False)
+    for_deletion_env.key = yaml_env.key
+    number_of_items_to_delete = len(for_deletion_env.get_active_data())
+
+    if number_of_items_to_delete == 0:
+        logging.info("Nothing to delete.")
+        return
+
+    logging.info(
+        f"{number_of_items_to_delete} entities will be deleted.")
+    logging.info("The following Secrets and Variables will be DELETED without replacement.\n"
+                 + str(for_deletion_env))
+
+    if not delete_nonexisting_without_prompt:
+        user_input = input("Continue? (Only 'yes' is accepted) :  ")
+        if user_input != 'yes':
+            logging.warning(
+                "Invalid input, aborting. No deletions have been made.")
+            return
+
+    all_repositories = for_deletion_env.get_repositories()
+    for repo_name in all_repositories:
+        for env_name in for_deletion_env.get_environments(repo_name):
+            if env_name is None:
+                RepositoryGitHubApi(
+                    private_key=for_deletion_env.key,
+                    repository=repo_name
+                ) \
+                    .delete_entities(
+                    entities_list=for_deletion_env.get_entities_from_environment(
+                        repo_name, env_name)
+                )
+            else:
+                EnvironmentGitHubApi(
+                    private_key=for_deletion_env.key,
+                    repository=repo_name,
+                    environment_name=env_name
+                ) \
+                    .delete_entities(
+                    entities_list=for_deletion_env.get_entities_from_environment(
+                        repo_name, env_name)
+                )
+    logging.info("Deletions complete.")
 
 
 if __name__ == "__main__":
