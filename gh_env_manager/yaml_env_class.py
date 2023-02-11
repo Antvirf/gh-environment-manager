@@ -49,21 +49,18 @@ class YamlEnv:
         self.data_content = []
 
         if path_to_yaml_env_file is None:
-            return
+            raise FileNotFoundError("No file provided.")
 
         if not os.path.isfile(path_to_yaml_env_file):
-            logging.error(
+            raise FileNotFoundError(
                 f"File '{path_to_yaml_env_file}' not found, aborting..")
-            quit()
 
         try:
             with open(path_to_yaml_env_file, 'r') as file_stream:
                 self.data = yaml.safe_load(file_stream)
         except yaml.YAMLError as error_msg:
-            logging.error("Could not process %s, please check syntax. Error: %s",
-                          path_to_yaml_env_file,
-                          error_msg
-                          )
+            raise yaml.YAMLError(
+                f"Could not process '{path_to_yaml_env_file}', please check syntax. Error: {error_msg}")
 
         self.key = self.data.get('GH_SECRET_SYNC_KEY', None)
         remove_null_keys(self.data)
@@ -113,11 +110,11 @@ class YamlEnv:
     def get_entities_from_environment(self, repository, environment) -> list:
         return [x for x in self.get_active_data() if (x.parent_repo == repository and x.parent_env == environment)]
 
-    def get_secrets_from_environment(self, repository, environment) -> list:
-        return [x for x in self.get_entities_from_environment(repository, environment) if isinstance(x, Secret)]
+    # def get_secrets_from_environment(self, repository, environment) -> list:
+    #     return [x for x in self.get_entities_from_environment(repository, environment) if isinstance(x, Secret)]
 
-    def get_variables_from_environment(self, repository, environment) -> list:
-        return [x for x in self.get_entities_from_environment(repository, environment) if isinstance(x, Variable)]
+    # def get_variables_from_environment(self, repository, environment) -> list:
+    #     return [x for x in self.get_entities_from_environment(repository, environment) if isinstance(x, Variable)]
 
     def append_entities(self,
                         input_data: dict,
@@ -146,7 +143,8 @@ class YamlEnv:
 
     def get_existing_entities(self, other_env) -> list:
         """'Left minus join' style operation. Take the entities available in self, and check if
-        any of them exist in the 'other'. If they do, delete them."""
+        any of them exist in the 'other'. If they do, delete them from the self.
+        Results in a set containing entities ONLY set in the self."""
 
         indices_overlapping_self_entity = []
         for i, self_entity in enumerate(self.get_active_data()):
@@ -164,7 +162,8 @@ class YamlEnv:
 
     def get_missing_entities(self, other_env) -> list:
         """'right minus join' style operation. Take the entities available in other, and check if
-        any of them exist in the 'self'. If they do, delete them."""
+        any of them exist in the 'self'. If they do, delete them from the other.
+        Results in a set containing entities ONLY set in the other."""
 
         indices_entries_only_in_other = []
         for i, other_entity in enumerate(other_env.get_active_data()):

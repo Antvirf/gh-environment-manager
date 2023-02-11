@@ -1,0 +1,20 @@
+GH_SECRET_SYNC_KEY: asd
+
+
+repositories:
+  Antvirf/gh-env-manager:
+    secrets:
+      - REPO_SECRET: something
+      - ANOTHER_REPO_SECRET: something
+    variables:
+      - repo-var: 1234
+      - REPO_VARIABLE: 1234
+    environments:
+      dev:
+        secrets:
+          - REPO_ENV_SECRET: something
+        variables:
+          - REPO_ENV_VARIABLE: something
+      prod:
+        secrets:
+        variables:
