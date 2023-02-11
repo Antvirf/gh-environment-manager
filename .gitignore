@@ -3,3 +3,6 @@
 .coverage
 __pycache__/
 dist/
+.pytest_cache
+htmlcov
+*.DS_Store

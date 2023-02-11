@@ -31,7 +31,7 @@ class SecretVariableEntity:
 class Secret(SecretVariableEntity):
     def __repr__(self) -> str:
         return str(
-            f"SECRET: {self.name}={self.value} in REPO {self.parent_repo}"
+            f"SECRET: {self.name}={self.value} @ {self.parent_repo}"
             + (f" ({self.parent_env})" if self.parent_env else "")
         )
 
