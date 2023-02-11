@@ -3,21 +3,16 @@
 ![Pytest coverage](./.github/badges/coverage.svg)
 ![Python](https://img.shields.io/badge/python-3.9%20-blue)
 
-## Installation
+## Installation (coming soon!)
 
+<!-- 
 ```bash
 pip install gh-env-manager
-```
-
-## Quick start guide
-
-```bash
-gh-env-manager path_to_your_env_file.yml
-```
+``` -->
 
 ---
 
-### Usage
+## Usage
 
 ```console
 $ gh_env_manager [OPTIONS] PATH_TO_FILE
