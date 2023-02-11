@@ -29,8 +29,8 @@ $ gh_env_manager update .env.yaml
 
 ### Commands
 
-* `fetch`:   Fetch all secrets and all variables from the specific GitHub repositories provided in your environment YAML file.
 * `read`:    Read given YAML file and output the interpreted contents.
+* `fetch`:   Fetch all secrets and all variables from the specific GitHub repositories provided in your environment YAML file.
 * `update`:  Update secrets and variables of the GitHub repositories using data from the provided YAML file. By default, existing secrets or variables are NOT overwritten. Try `gh-env-manager update --help` to view the available options.
 
 ### Options for `update`
@@ -38,6 +38,7 @@ $ gh_env_manager update .env.yaml
 * `-o, --overwrite`: If enabled, overwrite existing secrets and values in GitHub to match the provided YAML file.  [default: False]
 * `-d, --delete-nonexisting`: If enabled, delete secrets and variables that are not found in the provided YAML file.  [default: False]
 * `--delete-nonexisting-without-prompt`: Applies the same commands as `delete_nonexisting`, but without prompting the user for confirmation. [default: False]
+<!-- 
 * `--install-completion`: Install completion for the current shell.
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
-* `--help`: Show this message and exit.
+* `--help`: Show this message and exit. -->
