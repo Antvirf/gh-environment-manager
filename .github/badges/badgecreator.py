@@ -7,7 +7,7 @@ import sys
 import requests
 
 
-def create_badge(filename: str, badge_text: str, badge_value: str):
+def create_badge(badge_text: str, badge_value: str):
     """Given a text and a number, generate an .svg badge"""
     url = f"https://img.shields.io/badge/{badge_text}-{badge_value}-brightgreen"
     svg_text = requests.get(url).text
@@ -21,7 +21,6 @@ if __name__ == "__main__":
     for line in sys.stdin:
         coverage_value = str(line).strip()
         create_badge(
-            filename="coverage-badge",
             badge_text="coverage",
             badge_value=coverage_value
         )
