@@ -10,7 +10,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def encrypt_secret(public_key_input: str, secret_value: str) -> str:
+def encrypt_secret(public_key_input: str, secret_value: str) -> str:  # pragma: no cover
     """Encrypt a Unicode string using the public key. This code is directly from the GitHub docs"""
     public_key = public.PublicKey(
         public_key_input.encode("utf-8"), encoding.Base64Encoder())  # type: ignore
@@ -49,31 +49,31 @@ class GitHubApi:
             "X-GitHub-Api-Version": "2022-11-28"
         }, **extra_headers}
 
-        if method == "get":
+        if method == "get":  # pragma: no cover - basic requests method
             _response = requests.get(
                 url=url_for_request,
                 headers=headers_for_request,
                 data=payload
             )
-        elif method == "put":
+        elif method == "put":  # pragma: no cover - basic requests method
             _response = requests.put(
                 url=url_for_request,
                 headers=headers_for_request,
                 json=payload
             )
-        elif method == "post":
+        elif method == "post":  # pragma: no cover - basic requests method
             _response = requests.post(
                 url=url_for_request,
                 headers=headers_for_request,
                 json=payload
             )
-        elif method == "delete":
+        elif method == "delete":  # pragma: no cover - basic requests method
             _response = requests.delete(
                 url=url_for_request,
                 headers=headers_for_request,
                 json=payload
             )
-        elif method == "patch":
+        elif method == "patch":  # pragma: no cover - basic requests method
             _response = requests.patch(
                 url=url_for_request,
                 headers=headers_for_request,
