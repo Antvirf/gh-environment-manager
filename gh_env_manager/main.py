@@ -25,7 +25,7 @@ def read(path_to_file: str = typer.Argument(...)):
         f"Config file from {path_to_file} interpreted successfully:\n", yaml_env_file)
 
 
-@app.command(help="Fetch all secrets and all variables from the specific GitHub repositories"
+@app.command(help="Fetch all secrets and all variables from the specific GitHub repositories "
              "provided in your environment YAML file.")
 def fetch(path_to_file: str = typer.Argument(...),
           output: bool = typer.Option(True, help="Option that enables/disables output.")):

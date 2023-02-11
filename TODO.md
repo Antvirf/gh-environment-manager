@@ -11,6 +11,9 @@ Functionality
 1. ~~Make repo public -> Enable sonarcloud~~
 1. ~~Make repo public -> Enable CodeQL~~
 1. Write tests for proper coverage and automate them
+1. Separate flow to
+  Unit tests + coverage badge
+  Pylint
 1. Figure out how to combine RELEASE-PLEASE and Poetry build publish (release-please separate, then build publish 'on release')
   Make sure to have a way to increment the version
 
