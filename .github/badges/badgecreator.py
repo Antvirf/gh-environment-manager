@@ -1,7 +1,6 @@
 """
 Python script to get ratings and downloads from Garmin Marketplace, and create repo badges for both.
 """
-import subprocess
 import sys
 
 import requests

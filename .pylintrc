@@ -3,4 +3,4 @@
 # all. Valid levels: HIGH, INFERENCE, INFERENCE_FAILURE, UNDEFINED.
 confidence=UNDEFINED
 
-disable=dangerous-default-value, line-too-long, import-error, logging-fstring-interpolation, logging-not-lazy, super-init-not-called
+disable=dangerous-default-value, line-too-long, import-error, logging-fstring-interpolation, logging-not-lazy, super-init-not-called, redefined-outer-name

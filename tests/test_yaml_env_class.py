@@ -46,10 +46,9 @@ def test_remove_null_keys():
 
 
 def test_yaml_env_inits():
-    # no path
-    with pytest.raises(FileNotFoundError):
-        gh_env_manager.yaml_env_class.YamlEnv(
-            path_to_yaml_env_file=None)
+    # no path - works fine
+    gh_env_manager.yaml_env_class.YamlEnv(
+        path_to_yaml_env_file=None)
 
     # wrong path
     with pytest.raises(FileNotFoundError):

@@ -49,7 +49,7 @@ class YamlEnv:
         self.data_content = []
 
         if path_to_yaml_env_file is None:
-            raise FileNotFoundError("No file provided.")
+            return
 
         if not os.path.isfile(path_to_yaml_env_file):
             raise FileNotFoundError(
@@ -109,12 +109,6 @@ class YamlEnv:
 
     def get_entities_from_environment(self, repository, environment) -> list:
         return [x for x in self.get_active_data() if (x.parent_repo == repository and x.parent_env == environment)]
-
-    # def get_secrets_from_environment(self, repository, environment) -> list:
-    #     return [x for x in self.get_entities_from_environment(repository, environment) if isinstance(x, Secret)]
-
-    # def get_variables_from_environment(self, repository, environment) -> list:
-    #     return [x for x in self.get_entities_from_environment(repository, environment) if isinstance(x, Variable)]
 
     def append_entities(self,
                         input_data: dict,
@@ -186,6 +180,6 @@ class YamlEnvFromList(YamlEnv):
         self.key = ""
         self.data_content = []
 
-        self.data_content = [x for x in data_list]
+        self.data_content = list(data_list)
 
         self.validate(output)
