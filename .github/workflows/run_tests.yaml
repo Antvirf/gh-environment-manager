@@ -35,8 +35,9 @@ jobs:
     - name: Run tests and create coverage badge
       run: |
         source .venv/bin/activate
-        pytest --cov=gh_env_manager tests
-        python badges/badgecreator.py 
+        pytest --cov=gh_env_manager tests >> temp.txt
+        cat temp.txt
+        cat temp.txt | grep 'TOTAL' | grep  -E -i -o '([0-9]+)%' | python .github/badges/badgecreator.py
 
     - name: Commit coverage badge
       uses: EndBug/add-and-commit@v9
