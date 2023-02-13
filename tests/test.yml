@@ -1,8 +1,7 @@
-GH_SECRET_SYNC_KEY: asd
-
+GH_SECRET_SYNC_KEY: $REPLACE_WITH_PAT
 
 repositories:
-  Antvirf/gh-env-manager:
+  Antvirf/gh-environment-manager:
     secrets:
       - REPO_SECRET: something
       - ANOTHER_REPO_SECRET: something

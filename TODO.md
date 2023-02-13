@@ -15,7 +15,8 @@ Functionality
   Unit tests + coverage badge
   Pylint
 1. Figure out how to combine RELEASE-PLEASE and Poetry build publish (release-please separate, then build publish 'on release')
-  Make sure to have a way to increment the version
+  Make sure to have a way to increment the version in the Poetry files
+1. Write package description
 
 ## GH Actions snippet for build/publish
 

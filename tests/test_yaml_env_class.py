@@ -79,20 +79,21 @@ def test_yaml_env_str(yaml_env_list_object):
 
 def test_yaml_env_contains(yaml_env_object):
     assert (gh_env_manager.secret_variable_entity_class.Secret(
-        name="REPO_SECRET", value="something", repo="Antvirf/gh-env-manager") in yaml_env_object) is True
+        name="REPO_SECRET", value="something", repo="Antvirf/gh-environment-manager") in yaml_env_object) is True
     assert (gh_env_manager.secret_variable_entity_class.Variable(
-        name="REPO_ENV_VARIABLE", value="something", repo="Antvirf/gh-env-manager", env="dev") in yaml_env_object) is True
+        name="REPO_ENV_VARIABLE", value="something", repo="Antvirf/gh-environment-manager", env="dev") in yaml_env_object) is True
     assert (gh_env_manager.secret_variable_entity_class.Variable(
-        name="THIS_IS_NOT_THERE", value="something", repo="Antvirf/gh-env-manager", env="dev") in yaml_env_object) is False
+        name="THIS_IS_NOT_THERE", value="something", repo="Antvirf/gh-environment-manager", env="dev") in yaml_env_object) is False
 
 
 def test_yaml_env_get_repositories(yaml_env_object):
-    assert yaml_env_object.get_repositories() == ["Antvirf/gh-env-manager"]
+    assert yaml_env_object.get_repositories(
+    ) == ["Antvirf/gh-environment-manager"]
 
 
 def test_yaml_env_get_environments(yaml_env_object):
     result = yaml_env_object.get_environments(
-        repository="Antvirf/gh-env-manager"
+        repository="Antvirf/gh-environment-manager"
     )
     assert len(result) == 2
     assert None in result
@@ -101,11 +102,11 @@ def test_yaml_env_get_environments(yaml_env_object):
 
 def test_yaml_env_get_entities_from_environments(yaml_env_object):
     entities_from_environment = yaml_env_object.get_entities_from_environment(
-        repository="Antvirf/gh-env-manager",
+        repository="Antvirf/gh-environment-manager",
         environment="dev"
     )
     assert entities_from_environment[0] == gh_env_manager.secret_variable_entity_class.Secret(
-        name="REPO_ENV_SECRET", value="something", repo="Antvirf/gh-env-manager", env="dev")
+        name="REPO_ENV_SECRET", value="something", repo="Antvirf/gh-environment-manager", env="dev")
 
 
 def test_yaml_env_append_entities(yaml_env_list_object):
@@ -127,9 +128,9 @@ def test_yaml_env_get_existing_entities(yaml_env_object):
 
     entities_list = [
         gh_env_manager.secret_variable_entity_class.Secret(
-            name="REPO_SECRET", value="something", repo="Antvirf/gh-env-manager"),
+            name="REPO_SECRET", value="something", repo="Antvirf/gh-environment-manager"),
         gh_env_manager.secret_variable_entity_class.Variable(
-            name="REPO_ENV_VARIABLE", value="something", repo="Antvirf/gh-env-manager", env="dev"),
+            name="REPO_ENV_VARIABLE", value="something", repo="Antvirf/gh-environment-manager", env="dev"),
     ]
     other_test_env = gh_env_manager.yaml_env_class.YamlEnvFromList(
         entities_list)
@@ -145,9 +146,9 @@ def test_yaml_env_get_missing_entities(yaml_env_object, yaml_env_list_object):
 
     entities_list = [
         gh_env_manager.secret_variable_entity_class.Secret(
-            name="RANDOM_SECRET", value="something", repo="Antvirf/gh-env-manager"),
+            name="RANDOM_SECRET", value="something", repo="Antvirf/gh-environment-manager"),
         gh_env_manager.secret_variable_entity_class.Variable(
-            name="RANDOM_VARIABLE", value="something", repo="Antvirf/gh-env-manager", env="dev"),
+            name="RANDOM_VARIABLE", value="something", repo="Antvirf/gh-environment-manager", env="dev"),
     ]
     other_test_env = gh_env_manager.yaml_env_class.YamlEnvFromList(
         entities_list)
