@@ -1,5 +1,7 @@
 # GitHub Environment Manager - `gh_env_manager`
 
+This tool is in early development - use with care and expect to find bugs, When you do, please raise issues to help guide development 😊
+
 [![PyPI version](https://badge.fury.io/py/gh-env-manager.svg)](https://badge.fury.io/py/gh-env-manager)
 ![Pytest coverage](./.github/badges/coverage.svg)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=Antvirf_gh-environment-manager&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=Antvirf_gh-environment-manager)
