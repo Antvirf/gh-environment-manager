@@ -3,17 +3,17 @@ GH_SECRET_SYNC_KEY: $REPLACE_WITH_PAT
 repositories:
   Antvirf/gh-environment-manager:
     secrets:
-      - REPO_SECRET: something
-      - ANOTHER_REPO_SECRET: something
+      - REPO_SECRET: "something"
+      - ANOTHER_REPO_SECRET: "something"
     variables:
-      - repo-var: 1234
-      - REPO_VARIABLE: 1234
+      - repo-var: "1234" # This value will be ignored, as it is not uppercase
+      - REPO_VARIABLE: "1234"
     environments:
       dev:
         secrets:
-          - REPO_ENV_SECRET: something
+          - REPO_ENV_SECRET: "something"
         variables:
-          - REPO_ENV_VARIABLE: something
-      prod:
-        secrets:
-        variables:
+          - REPO_ENV_VARIABLE: "something"
+      prod:         # This block will be ignored since there are no entities
+        secrets:    # This block will be ignored since there are no entities
+        variables:  # This block will be ignored since there are no entities
