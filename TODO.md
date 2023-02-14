@@ -11,6 +11,7 @@ Functionality
 1. ~~Make repo public -> Enable sonarcloud~~
 1. ~~Make repo public -> Enable CodeQL~~
 1. Write tests for proper coverage and automate them
+1. Move all common test fixtures to `conftest.py`
 1. Separate flow to
   Unit tests + coverage badge
   Pylint

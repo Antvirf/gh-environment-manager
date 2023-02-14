@@ -5,23 +5,6 @@ import gh_env_manager.secret_variable_entity_class
 import gh_env_manager.yaml_env_class
 
 
-@pytest.fixture(scope='session')
-def yaml_env_list_object():
-    return gh_env_manager.yaml_env_class.YamlEnvFromList(
-        [
-            gh_env_manager.secret_variable_entity_class.Secret(
-                name="SECRET", value="value", repo="repo_name"),
-            gh_env_manager.secret_variable_entity_class.Variable(
-                name="Invalidly named variable", value="value", repo="repo_name"),
-        ]
-    )
-
-
-@pytest.fixture(scope='session')
-def yaml_env_object():
-    return gh_env_manager.yaml_env_class.YamlEnv("./tests/test.yml")
-
-
 def test_remove_null_keys():
     test_dict = {
         'secrets': [  # keep as-is

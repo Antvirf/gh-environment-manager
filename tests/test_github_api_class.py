@@ -1,15 +1,7 @@
 import pytest
-import yaml
 
 import gh_env_manager.github_api_class
 import gh_env_manager.github_api_implementations
-
-
-@pytest.fixture(scope='session')
-def test_yaml():
-    with open("./tests/test.yml", 'r') as file_stream:
-        data = yaml.safe_load(file_stream)
-    return data
 
 
 def test_github_make_request():
@@ -30,52 +22,13 @@ def test_github_unsupported_method():
             endpoint="",
             method="notimplemented")
 
-# secrets
+
+def test_github_empty_input_to_delete_entities(gh_repo_api):
+    gh_repo_api.delete_entities([])
 
 
-def test_github_api_create_secret():
-    pass
-
-
-def test_github_api_get_secret():
-    pass
-
-
-def test_github_api_list_secret():
-    pass
-
-
-def test_github_api_delete_secret():
-    pass
-
-
-# variables
-def test_github_api_create_variable():
-    pass
-
-
-def test_github_api_patch_variable():
-    pass
-
-
-def test_github_api_get_variable():
-    pass
-
-
-def test_github_api_list_variable():
-    pass
-
-
-def test_github_api_delete_variable():
-    pass
-
-
-def test_github_api_create_entities():
-    pass
-
-
-def test_github_api_delete_entities():
-    pass
+def test_github_empty_inpucreate_entities(gh_repo_api):
+    gh_repo_api.create_entities([])
 
 
 def test_github_implementation_repo(test_yaml):
