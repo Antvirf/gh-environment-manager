@@ -3,6 +3,8 @@ name: Pylint
 on:
   push:
     branches: ["*"]
+  pull_request:
+    branches: [ "main" ]
 
 env:
   PYLINT_THRESHOLD: 9.5
