@@ -1,0 +1,43 @@
+name: release-please
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/release-please-action@v3
+        with:
+          release-type: python
+          pull-request-header: "GitHub Environment Manager: Release-please PR"
+
+      - uses: actions/checkout@v3
+        if: ${{ steps.release.outputs.release_created }}
+
+      - uses: actions/setup-python@v4
+        if: ${{ steps.release.outputs.release_created }}  
+        with:
+          python-version: '3.9'
+
+      - name: Install Poetry
+        if: ${{ steps.release.outputs.release_created }}
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      - name: Install dependencies
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          poetry install --no-interaction
+
+      - name: Publish package
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          poetry config pypi-token.pypi $PYPI_TOKEN
+          poetry publish --verbose --build --no-interaction
