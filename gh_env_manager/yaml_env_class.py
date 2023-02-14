@@ -35,7 +35,7 @@ class YamlEnv:
                     logging.warning(
                         "%s has an invalid name and will be ignored.", entity)
 
-            if any([not x.name_valid for x in self.data_content]):
+            if any(not x.name_valid for x in self.data_content):
                 logger.warning("Please review the syntax of your environment YAML file. "
                                "As per GitHub spec, secret and variable names can only contain "
                                "alphanumeric characters ([A-Z], [0-9]) or underscores (_), "
@@ -101,11 +101,11 @@ class YamlEnv:
         return [x for x in self.data_content if x.is_active]
 
     def get_repositories(self) -> list:
-        return list(set([x.parent_repo for x in self.get_active_data()]))
+        return list({x.parent_repo for x in self.get_active_data()})
 
     def get_environments(self, repository) -> list:
         # also returns a single None here, for when you have stuff in 'no' environment
-        return list(set([x.parent_env for x in self.get_active_data() if x.parent_repo == repository]))
+        return list({x.parent_env for x in self.get_active_data() if x.parent_repo == repository})
 
     def get_entities_from_environment(self, repository, environment) -> list:
         return [x for x in self.get_active_data() if (x.parent_repo == repository and x.parent_env == environment)]

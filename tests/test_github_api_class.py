@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 import pytest
 
 import gh_env_manager.github_api_class
@@ -9,8 +10,7 @@ def test_github_make_request():
         key="",
         api_url="https://google.com"
     )
-    api._make_request(
-        endpoint="")
+    api._make_request(endpoint="")
 
 
 def test_github_unsupported_method():
@@ -19,8 +19,7 @@ def test_github_unsupported_method():
     )
     with pytest.raises(NotImplementedError):
         api._make_request(
-            endpoint="",
-            method="notimplemented")
+            endpoint="", method="notimplemented")
 
 
 def test_github_empty_input_to_delete_entities(gh_repo_api):
@@ -37,10 +36,10 @@ def test_github_implementation_repo(test_yaml):
         repository="Antvirf/gh-environment-manager"
     )
     api.get_public_key()
-    assert f"REPOSITORY Antvirf/gh-environment-manager ENVIRONMENT '{str(None)}':" == api.current_parent_type
-    assert f"repos/Antvirf/gh-environment-manager/actions/secrets/public-key" == api.get_public_key_endpoint
-    assert f"repos/Antvirf/gh-environment-manager/actions/secrets" == api.secrets_endpoint
-    assert f"repos/Antvirf/gh-environment-manager/actions/variables" == api.variables_endpoint
+    assert api.current_parent_type == f"REPOSITORY Antvirf/gh-environment-manager ENVIRONMENT '{str(None)}':"
+    assert api.get_public_key_endpoint == "repos/Antvirf/gh-environment-manager/actions/secrets/public-key"
+    assert api.secrets_endpoint == "repos/Antvirf/gh-environment-manager/actions/secrets"
+    assert api.variables_endpoint == "repos/Antvirf/gh-environment-manager/actions/variables"
 
 
 def test_github_implementation_repo_env(test_yaml):
@@ -53,6 +52,6 @@ def test_github_implementation_repo_env(test_yaml):
     api.get_repository_id("Antvirf/gh-environment-manager")
 
     assert str(api.repository_id) == str(598437204)
-    assert f"REPOSITORY Antvirf/gh-environment-manager ENVIRONMENT 'dev':" == api.current_parent_type
-    assert f"repositories/598437204/environments/dev/secrets" == api.secrets_endpoint
-    assert f"repositories/598437204/environments/dev/variables" == api.variables_endpoint
+    assert api.current_parent_type == "REPOSITORY Antvirf/gh-environment-manager ENVIRONMENT 'dev':"
+    assert api.secrets_endpoint == "repositories/598437204/environments/dev/secrets"
+    assert api.variables_endpoint == "repositories/598437204/environments/dev/variables"

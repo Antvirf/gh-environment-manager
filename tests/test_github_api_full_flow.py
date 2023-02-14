@@ -1,7 +1,4 @@
-import gh_env_manager.secret_variable_entity_class
-
-from .conftest import TARGET_TEST_REPOSITORY
-
+# pylint: disable=protected-access
 
 def test_gh_api_full_flow_repo(
         gh_repo_api,
@@ -67,11 +64,9 @@ def test_gh_api_full_flow_repo(
             repo_additional_secrets_to_create[0], repo_additional_variables_to_create[0]
         ])
         gh_repo_api._delete_secret(
-            secret_name=repo_additional_secrets_to_create[1].name
-        )
+            secret_name=repo_additional_secrets_to_create[1].name)
         gh_repo_api._delete_variable(
-            variable_name=repo_additional_variables_to_create[1].name
-        )
+            variable_name=repo_additional_variables_to_create[1].name)
 
     # step 7: ensure entities were deleted by asserting start state == end state
     assert gh_repo_api.list_secrets() == secrets_in_test_repo_at_the_beginning_dicts
