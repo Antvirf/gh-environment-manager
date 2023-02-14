@@ -2,9 +2,6 @@
 
 1. Improve test coverage of `main.py`
 1. Move all common test fixtures to `conftest.py` and streamline test code
-1. Separate out flows for
-  Tests
-  Pylint
 1. Tests for trying to do something on a missing environment or repo
 
 ## Test scenarios/ combinations for `update` command
