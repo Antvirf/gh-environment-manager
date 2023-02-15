@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/Antvirf/gh-environment-manager/compare/v0.2.0...v0.3.0) (2023-02-15)
+
+
+### Features
+
+* add handling for missing (404) or unauth (401) repos ad envs ([6c40dcc](https://github.com/Antvirf/gh-environment-manager/commit/6c40dccd47d466e4fbb9023dc9a5ddb9ab3b5a2d))
+
+
+### Documentation
+
+* add disclaimer and fix historical changelog ([609ce50](https://github.com/Antvirf/gh-environment-manager/commit/609ce50476782839f6900bac9291d3aa24b72baf))
+
 ## [0.2.0](https://github.com/Antvirf/gh-environment-manager/compare/v0.1.0...v0.2.0) (2023-02-14)
 
 ### Documentation
