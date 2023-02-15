@@ -84,8 +84,19 @@ class GitHubApi:
                 "Given method '%s' has not been implemented." % method)
 
         logging.debug(str(_response.content))
-        if _response.status_code != 409:  # deal with 409 conflict separately
+
+        if _response.status_code not in [409, 404, 401]:
             _response.raise_for_status()
+        elif _response.status_code == 401:
+            raise SystemExit(requests.HTTPError(f"ERROR: HTTP 401 Unauthorized: {_response.url}\n"
+                                                "Check the provided personal access token, "
+                                                "it may be expired or you may be trying to access "
+                                                "a repository this token does not have access to."))
+        elif _response.status_code == 404:
+            raise SystemExit(requests.HTTPError(f"ERROR: HTTP 404 Not found: {_response.url}\n"
+                                                "Check (1) the name of the provided repository; "
+                                                "(2) the name of the provided environment, if any; "
+                                                "(3) validity of your personal access token."))
 
         try:
             return_json = _response.json()

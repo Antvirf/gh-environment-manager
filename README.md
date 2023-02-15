@@ -41,7 +41,13 @@ pip install gh-env-manager
               - YOUR_DEV_SECRET: "something"
             variables:
               - YOUR_DEV_VARIABLE: "something"
-    
+
+      # you can add as many repositories as desired
+      username/repositoryname: #...
+        secrets:
+          ...
+        variables:
+          ...
     ```
 
 1. Run `gh-env-manager fetch ./path_to_your_yaml_file` to get current state of your repositories
