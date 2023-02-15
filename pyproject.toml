@@ -2,7 +2,7 @@
 name = "gh-env-manager"
 version = "0.2.0"
 description = ""
-authors = ["Antti Viitala <antti.viitala@icloud.com>"]
+authors = ["Antti Viitala <tied02beaches@icloud.com>"]
 readme = "README.md"
 packages = [{include = "gh_env_manager"}]
 
