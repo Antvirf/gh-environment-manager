@@ -31,8 +31,11 @@ class SecretVariableEntity:
 
 class Secret(SecretVariableEntity):
     def __repr__(self) -> str:
+        secret_value = self.value
+        if self.value is None:
+            secret_value = "???"
         return str(
-            f"SECRET: {self.name}={self.value} @ {self.parent_repo}"
+            f"SECRET: {self.name}={secret_value} @ {self.parent_repo}"
             + (f" ({self.parent_env})" if self.parent_env else "")
         )
 
