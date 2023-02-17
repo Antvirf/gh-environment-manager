@@ -38,6 +38,10 @@ def fetch(path_to_file: str = typer.Argument(...),
 
     logging.info(
         "Fetching current state of your repositories from GitHub...")
+
+    # Create 'FAUX' secret and variable for every repo so that they are not ignored as nulls
+    yaml_env.load_faux_entities()
+
     all_repositories = yaml_env.get_repositories()
     for repo_name in all_repositories:
         for env_name in yaml_env.get_environments(repo_name):

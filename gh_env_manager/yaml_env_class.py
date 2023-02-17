@@ -1,3 +1,4 @@
+import copy
 import logging
 import os
 from typing import Optional
@@ -58,11 +59,15 @@ class YamlEnv:
         try:
             with open(path_to_yaml_env_file, 'r') as file_stream:
                 self.data = yaml.safe_load(file_stream)
+
         except yaml.YAMLError as error_msg:
             raise yaml.YAMLError(
                 f"Could not process '{path_to_yaml_env_file}', please check syntax. Error: {error_msg}")
 
         self.key = self.data.get('GH_SECRET_SYNC_KEY', None)
+
+        # potentially required for fetch operation
+        self.original_data = copy.deepcopy(self.data)
         remove_null_keys(self.data)
 
         # load data structure
@@ -77,6 +82,23 @@ class YamlEnv:
                     env=env_name)
 
         self.validate(output)
+
+    def load_faux_entities(self):
+        """Create a faux secret and variable in every repository (and env), so that we can do
+        a fetch even if the file only lists repo names."""
+        for repo_name, repo_data in (self.original_data["repositories"] if "repositories" in self.original_data else {}).items():
+            self.data_content += [
+                Secret(name="FAUX", value="faux", repo=repo_name),
+                Variable(name="FAUX", value="faux", repo=repo_name)
+            ]
+            if isinstance(repo_data, dict):
+                for env_name in repo_data.get("environments", []):
+                    self.data_content += [
+                        Secret(name="FAUX", value="faux",
+                               repo=repo_name, env=env_name),
+                        Variable(name="FAUX", value="faux",
+                                 repo=repo_name, env=env_name)
+                    ]
 
     def __str__(self) -> str:
         string = """"""

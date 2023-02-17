@@ -2,6 +2,7 @@
 
 1. Improve test coverage of `main.py`
 1. Move all common test fixtures to `conftest.py` and streamline test code
+1. Implement async for fetch and set operations
 
 ## Test scenarios/ combinations for `update` command
 

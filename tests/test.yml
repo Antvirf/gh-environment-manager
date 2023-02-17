@@ -14,6 +14,7 @@ repositories:
           - REPO_ENV_SECRET: "something"
         variables:
           - REPO_ENV_VARIABLE: "something"
-      prod:         # This block will be ignored since there are no entities
-        secrets:    # This block will be ignored since there are no entities
-        variables:  # This block will be ignored since there are no entities
+      # With the current fetch setup, adding an environment that doesn't exist will give a 404.
+      # prod:         # This block will be ignored since there are no entities
+      #   secrets:    # This block will be ignored since there are no entities
+      #   variables:  # This block will be ignored since there are no entities
