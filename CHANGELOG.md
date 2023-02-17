@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/Antvirf/gh-environment-manager/compare/v0.3.0...v0.4.0) (2023-02-17)
+
+
+### Features
+
+* show unknown secrets as ??? instead of None ([325f506](https://github.com/Antvirf/gh-environment-manager/commit/325f50638e51b4ab4369bfd3c853da1508b1930f))
+* support fetch operation for repos without any entities in yaml ([129f24d](https://github.com/Antvirf/gh-environment-manager/commit/129f24da08daff40fea524b1d7d4bc2d220a7ff1))
+
+
+### Documentation
+
+* update project description ([7d5cc48](https://github.com/Antvirf/gh-environment-manager/commit/7d5cc480c6216f66a1ca0f7bc5d7c256ea78474b))
+
 ## [0.3.0](https://github.com/Antvirf/gh-environment-manager/compare/v0.2.0...v0.3.0) (2023-02-15)
 
 
