@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/Antvirf/gh-environment-manager/compare/v0.4.0...v0.4.1) (2023-05-23)
+
+
+### Bug Fixes
+
+* remove unneeded secret use from test flow ([52cd06f](https://github.com/Antvirf/gh-environment-manager/commit/52cd06fddeee69ce4964d9d0824e8d506c102942))
+
 ## [0.4.0](https://github.com/Antvirf/gh-environment-manager/compare/v0.3.0...v0.4.0) (2023-02-17)
 
 
