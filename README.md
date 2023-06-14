@@ -1,6 +1,7 @@
 # GitHub Environment Manager - `gh_env_manager`
 
-This tool is in early development - use with care and expect to find bugs, When you do, please raise issues to help guide development 😊
+**NOTICE: Please note that the [GitHub CLI](https://cli.github.com/) now supports setting `variables` and `secrets`. For many use-cases you're probably better off using the GH CLI + scripting to set your variables rather than this library 🙂**
+
 
 [![PyPI version](https://badge.fury.io/py/gh-env-manager.svg)](https://badge.fury.io/py/gh-env-manager)
 ![Pytest coverage](./.github/badges/coverage.svg)
