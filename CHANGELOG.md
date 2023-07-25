@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/Antvirf/gh-environment-manager/compare/v0.4.1...v0.4.2) (2023-07-25)
+
+
+### Documentation
+
+* add README notice on GH CLI ([1cef355](https://github.com/Antvirf/gh-environment-manager/commit/1cef35556dd7c2c5fb47af6c2262c50fa1a4d4a7))
+
 ## [0.4.1](https://github.com/Antvirf/gh-environment-manager/compare/v0.4.0...v0.4.1) (2023-05-23)
 
 
